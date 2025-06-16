@@ -23,41 +23,65 @@ fi
 USER_REAL=${SUDO_USER:-$(whoami)}
 HOME_REAL=$(eval echo ~$USER_REAL)
 
+function ensure_pkg() {
+  for pkg in "$@"; do
+    if ! pacman -Q "$pkg" &>/dev/null; then
+      log "Instalando $pkg..."
+      pacman -S --noconfirm "$pkg"
+    else
+      log "$pkg ya está instalado."
+    fi
+  done
+}
+
 log "Actualizando sistema..."
 pacman -Syu --noconfirm
 
 log "Instalando herramientas base..."
-pacman -S --noconfirm sudo git curl wget neovim unzip htop base-devel
+ensure_pkg sudo git curl wget neovim unzip htop base-devel
 
 log "Instalando Helix y configurando como editor por defecto..."
-pacman -S --noconfirm helix
-echo "export EDITOR=hx" >> /etc/environment
-echo "export VISUAL=hx" >> /etc/environment
+ensure_pkg helix
+
+# Añadir variables de entorno si no existen
+for var in "EDITOR=hx" "VISUAL=hx"; do
+  grep -qxF "export $var" /etc/environment || echo "export $var" >> /etc/environment
+done
 
 log "Agregando usuario '$USER_REAL' al grupo wheel..."
 usermod -aG wheel "$USER_REAL"
 
 log "Instalando Sway y componentes Wayland..."
-pacman -S --noconfirm sway wofi kitty xorg-xwayland xdg-utils xdg-desktop-portal-wlr
+ensure_pkg sway wofi kitty xorg-xwayland xdg-utils xdg-desktop-portal-wlr
 
 log "Instalando sonido (Pipewire)..."
-pacman -S --noconfirm pipewire wireplumber alsa-utils
+ensure_pkg pipewire wireplumber alsa-utils
 
 log "Instalando TBSM (session manager)..."
-pacman -S --noconfirm tbsm
+ensure_pkg tbsm
 
-log "Configurando inicio automático de tbsm desde TTY1..."
-echo '[[ -z $DISPLAY && $(tty) = /dev/tty1 ]] && exec tbsm' >> "$HOME_REAL/.bash_profile"
-chown "$USER_REAL":"$USER_REAL" "$HOME_REAL/.bash_profile"
+# Añadir autoinicio de tbsm en bash_profile y zshrc si no existe
+AUTOLOGIN_LINE="[[ -z \$DISPLAY && \$(tty) = /dev/tty1 ]] && exec tbsm"
+for shellrc in "$HOME_REAL/.bash_profile" "$HOME_REAL/.zshrc"; do
+  if [[ -f "$shellrc" ]]; then
+    grep -qxF "$AUTOLOGIN_LINE" "$shellrc" || echo "$AUTOLOGIN_LINE" >> "$shellrc"
+  else
+    echo "$AUTOLOGIN_LINE" > "$shellrc"
+  fi
+  chown "$USER_REAL":"$USER_REAL" "$shellrc"
+done
 
 # === INSTALAR YAY si no existe ===
 if ! command -v yay &>/dev/null; then
   log "Instalando yay (helper de AUR)..."
   sudo -u "$USER_REAL" bash -c "
     cd ~
+    rm -rf yay
     git clone https://aur.archlinux.org/yay.git
     cd yay
     makepkg -si --noconfirm
+    cd ..
+    rm -rf yay
   "
 fi
 
@@ -71,8 +95,15 @@ sudo -u "$USER_REAL" yay -S --noconfirm gvm
 
 log "Inicializando base de datos de GVM... (puede tardar)"
 sudo -u "$USER_REAL" gvm-setup || error_exit "Falló la inicialización de GVM."
+
 log "Habilitando servicios de GVM..."
-systemctl enable --now gvmd ospd-openvas notus-scanner
+for svc in gvmd ospd-openvas notus-scanner; do
+  if systemctl list-unit-files | grep -q "^${svc}.service"; then
+    systemctl enable --now "$svc"
+  else
+    log "Servicio $svc no encontrado, omitiendo."
+  fi
+done
 
 log "Instalación básica completada."
 echo -e "\nReinicia el sistema para iniciar sesión con TTY + tbsm + sway."
