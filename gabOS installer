@@ -4,7 +4,7 @@ set -e
 
 # ===============================
 # Instalador desatendido para gabOS
-# Basado en Debian Testing + Sway
+# Basado en Arch Linux
 # ===============================
 
 function log() {
@@ -20,82 +20,61 @@ if [[ $EUID -ne 0 ]]; then
   error_exit "Este script debe ejecutarse como root."
 fi
 
-USER_REAL=$(logname)
+USER_REAL=${SUDO_USER:-$(whoami)}
 HOME_REAL=$(eval echo ~$USER_REAL)
 
 log "Actualizando sistema..."
-apt update && apt upgrade -y
+pacman -Syu --noconfirm
 
 log "Instalando herramientas base..."
-apt install -y sudo git curl wget neovim unzip htop build-essential
+pacman -S --noconfirm sudo git curl wget neovim unzip htop base-devel
 
 log "Instalando Helix y configurando como editor por defecto..."
-apt install -y helix
-command -v hx >/dev/null 2>&1 || ln -s $(command -v helix) /usr/bin/hx
-apt remove -y nano || true
-update-alternatives --install /usr/bin/editor editor /usr/bin/hx 100
-update-alternatives --set editor /usr/bin/hx
+pacman -S --noconfirm helix
+echo "export EDITOR=hx" >> /etc/environment
+echo "export VISUAL=hx" >> /etc/environment
 
-log "Agregando usuario '$USER_REAL' al grupo sudo..."
-usermod -aG sudo "$USER_REAL"
+log "Agregando usuario '$USER_REAL' al grupo wheel..."
+usermod -aG wheel "$USER_REAL"
 
 log "Instalando Sway y componentes Wayland..."
-apt install -y sway wofi kitty xwayland xdg-utils xdg-desktop-portal-wlr
+pacman -S --noconfirm sway wofi kitty xorg-xwayland xdg-utils xdg-desktop-portal-wlr
 
 log "Instalando sonido (Pipewire)..."
-apt install -y pipewire wireplumber alsa-utils
+pacman -S --noconfirm pipewire wireplumber alsa-utils
 
-# === INSTALAR LY (Login Manager) ===
-log "Instalando dependencias para ly..."
-apt install -y libpam0g-dev libxcb-xkb-dev
+log "Instalando TBSM (session manager)..."
+pacman -S --noconfirm tbsm
 
-log "Instalando Zig temporalmente..."
-mkdir -p /opt/zig && cd /opt/zig
-ZIG_VER="0.11.0"
-wget https://ziglang.org/download/${ZIG_VER}/zig-linux-x86_64-${ZIG_VER}.tar.xz || error_exit "No se pudo descargar Zig."
-tar -xf zig-linux-x86_64-${ZIG_VER}.tar.xz --strip-components=1
-ln -sf /opt/zig/zig /usr/local/bin/zig
+log "Configurando inicio automático de tbsm desde TTY1..."
+echo '[[ -z $DISPLAY && $(tty) = /dev/tty1 ]] && exec tbsm' >> "$HOME_REAL/.bash_profile"
+chown "$USER_REAL":"$USER_REAL" "$HOME_REAL/.bash_profile"
 
-log "Clonando repositorio de ly..."
-cd /opt
-git clone https://github.com/fairyglade/ly.git || error_exit "No se pudo clonar ly."
-cd ly
-make
-make install
+# === INSTALAR YAY si no existe ===
+if ! command -v yay &>/dev/null; then
+  log "Instalando yay (helper de AUR)..."
+  sudo -u "$USER_REAL" bash -c "
+    cd ~
+    git clone https://aur.archlinux.org/yay.git
+    cd yay
+    makepkg -si --noconfirm
+  "
+fi
 
-log "Habilitando ly como display manager..."
-systemctl enable ly.service
+# === INSTALAR BRAVE (desde AUR) ===
+log "Instalando Brave Browser (desde AUR)..."
+sudo -u "$USER_REAL" yay -S --noconfirm brave-bin
 
-log "Limpiando instalación de Zig..."
-rm -rf /opt/zig
-rm -f /usr/local/bin/zig
+# === INSTALAR GVM (OpenVAS desde AUR) ===
+log "Instalando GVM (OpenVAS desde AUR)..."
+sudo -u "$USER_REAL" yay -S --noconfirm gvm
 
-# === INSTALAR BRAVE ===
-log "Instalando Brave Browser..."
-curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
-  https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg || error_exit "No se pudo descargar la llave de Brave."
-
-echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] \
-https://brave-browser-apt-release.s3.brave.com/ stable main" > /etc/apt/sources.list.d/brave-browser-release.list
-
-apt update
-apt install -y brave-browser gnome-keyring libasound2 || error_exit "No se pudo instalar Brave."
-
-# === INSTALACIÓN DE HERRAMIENTAS DE PENTESTING ===
-
-log "Instalando dependencias adicionales para GVM..."
-apt install -y rsync gnupg python3-setuptools python3-packaging \
-  python3-paramiko python3-defusedxml python3-psutil python3-lxml
-
-log "Instalando GVM (OpenVAS)..."
-apt install -y gvm
-log "Inicializando base de datos de vulnerabilidades... (puede tardar unos minutos)"
+log "Inicializando base de datos de GVM... (puede tardar)"
 sudo -u "$USER_REAL" gvm-setup || error_exit "Falló la inicialización de GVM."
 log "Habilitando servicios de GVM..."
 systemctl enable --now gvmd ospd-openvas notus-scanner
 
 log "Instalación básica completada."
-echo -e "\n  Reinicia el sistema para iniciar sesión."
-echo " Sistema base instalado correctamente."
-echo -e "\n gabOS listo. Puedes reiniciar."
+echo -e "\nReinicia el sistema para iniciar sesión con TTY + tbsm + sway."
+echo -e "\n gabOS está listo. ¡Buen hacking, $USER_REAL!"
 read -p "Presiona Enter para salir..."
