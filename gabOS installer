@@ -43,9 +43,9 @@ ensure_pkg sudo git curl wget neovim unzip htop base-devel
 log "Instalando Helix y configurando como editor por defecto..."
 ensure_pkg helix
 
-# Añadir variables de entorno si no existen
+# Añadir variables de entorno si no existen (sin 'export')
 for var in "EDITOR=hx" "VISUAL=hx"; do
-  grep -qxF "export $var" /etc/environment || echo "export $var" >> /etc/environment
+  grep -qxF "$var" /etc/environment || echo "$var" >> /etc/environment
 done
 
 log "Agregando usuario '$USER_REAL' al grupo wheel..."
@@ -69,8 +69,7 @@ for shellrc in "$HOME_REAL/.bash_profile" "$HOME_REAL/.zshrc"; do
     echo "$AUTOLOGIN_LINE" > "$shellrc"
   fi
   chown "$USER_REAL":"$USER_REAL" "$shellrc"
-
-
+done
 
 # === INSTALAR YAY si no existe ===
 if ! command -v yay &>/dev/null; then
@@ -104,7 +103,6 @@ for svc in gvmd ospd-openvas notus-scanner; do
   else
     log "Servicio $svc no encontrado, omitiendo."
   fi
-
 done
 
 # === INSTALAR EWW (ElKowar's Wacky Widgets) ===
