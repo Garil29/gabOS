@@ -54,19 +54,11 @@ ensure_pkg sway wofi kitty xorg-xwayland xdg-utils xdg-desktop-portal-wlr
 log "Instalando sonido (Pipewire)..."
 ensure_pkg pipewire wireplumber alsa-utils
 
-log "Instalando TBSM (session manager)..."
-ensure_pkg tbsm
+log "Instalando ly (session manager)..."
+ensure_pkg ly
 
-# Añadir autoinicio de tbsm en bash_profile y zshrc si no existe, siempre en el home del usuario real
-AUTOLOGIN_LINE="[[ -z \$DISPLAY && \$(tty) = /dev/tty1 ]] && exec tbsm"
-for shellrc in "$HOME_REAL/.bash_profile" "$HOME_REAL/.zshrc"; do
-  if [[ -f "$shellrc" ]]; then
-    grep -qxF "$AUTOLOGIN_LINE" "$shellrc" || echo "$AUTOLOGIN_LINE" >> "$shellrc"
-  else
-    echo "$AUTOLOGIN_LINE" > "$shellrc"
-  fi
-  chown "$USER_REAL":"$USER_REAL" "$shellrc"
-done
+log "Habilitando ly como display manager..."
+systemctl enable ly.service || error_exit "No se pudo habilitar ly."
 
 # === INSTALAR YAY si no existe ===
 if ! command -v yay &>/dev/null; then
