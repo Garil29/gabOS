@@ -1,0 +1,81 @@
+#!/bin/bash
+
+set -e
+
+# ===============================
+# Instalador desatendido para gabOS
+# Basado en Debian Testing & Sway
+# ===============================
+
+function log() {
+  echo -e "\033[1;32m[INFO]\033[0m $1"
+}
+
+function error_exit() {
+  echo -e "\033[1;31m[ERROR]\033[0m $1"
+  exit 1
+}
+
+if [[ $EUID -ne 0 ]]; then
+  error_exit "Este script debe ejecutarse como root."
+fi
+
+USER_REAL=$(logname)
+HOME_REAL=$(eval echo ~$USER_REAL)
+
+log "Actualizando sistema..."
+apt update && apt upgrade -y
+
+log "Instalando herramientas base..."
+apt install -y sudo git curl wget neovim unzip htop build-essential
+
+log "Instalando Helix y reemplazando nano..."
+apt install -y helix
+apt remove -y nano
+ln -sf /usr/bin/hx /usr/bin/nano
+
+log "Agregando usuario '$USER_REAL' al grupo sudo..."
+usermod -aG sudo "$USER_REAL"
+
+log "Instalando Sway y componentes Wayland..."
+apt install -y sway wofi kitty xwayland xdg-utils xdg-desktop-portal-wlr
+
+log "Instalando sonido (Pipewire)..."
+apt install -y pipewire wireplumber alsa-utils
+
+# === INSTALAR LY (Login Manager) ===
+log "Instalando dependencias para ly..."
+apt install -y libpam0g-dev libxcb-xkb-dev
+
+log "Instalando Zig temporalmente..."
+mkdir -p /opt/zig && cd /opt/zig
+ZIG_VER="0.11.0"
+wget https://ziglang.org/download/${ZIG_VER}/zig-linux-x86_64-${ZIG_VER}.tar.xz
+tar -xf zig-linux-x86_64-${ZIG_VER}.tar.xz --strip-components=1
+ln -sf /opt/zig/zig /usr/local/bin/zig
+
+log "Clonando repositorio de ly..."
+cd /opt
+git clone https://github.com/fairyglade/ly.git
+cd ly
+make
+make install
+
+log "Habilitando ly como display manager..."
+systemctl enable ly.service
+
+# === INSTALAR BRAVE ===
+log "Instalando Brave Browser..."
+curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
+  https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] \
+https://brave-browser-apt-release.s3.brave.com/ stable main" | \
+tee /etc/apt/sources.list.d/brave-browser-release.list
+
+apt update
+apt install -y brave-browser
+
+log "Instalación básica completada."
+echo "⚠Reinicia el sistema para iniciar sesión."
+echo "Sistema base instalado correctamente."
