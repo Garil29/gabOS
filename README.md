@@ -1,2 +1,2 @@
 # gabOS
-my personal pentesting OS
+work in progress
