@@ -20,14 +20,19 @@ if [[ $EUID -ne 0 ]]; then
   error_exit "Este script debe ejecutarse como root."
 fi
 
-USER_REAL=${SUDO_USER:-$(whoami)}
+USER_REAL=${SUDO_USER:-$(logname 2>/dev/null || echo '')}
 HOME_REAL=$(eval echo ~$USER_REAL)
+
+# Si el usuario real es root, advertir y salir
+if [[ "$USER_REAL" == "root" || -z "$USER_REAL" || "$HOME_REAL" == "/root" ]]; then
+  error_exit "No debe ejecutar este instalador como root directamente. Use 'sudo' desde el usuario final."
+fi
 
 function ensure_pkg() {
   for pkg in "$@"; do
     if ! pacman -Q "$pkg" &>/dev/null; then
       log "Instalando $pkg..."
-      pacman -S --noconfirm "$pkg"
+      pacman -S --noconfirm "$pkg" || error_exit "No se pudo instalar $pkg."
     else
       log "$pkg ya está instalado."
     fi
@@ -35,10 +40,10 @@ function ensure_pkg() {
 }
 
 log "Actualizando sistema..."
-pacman -Syu --noconfirm
+pacman -Syu --noconfirm || error_exit "Error al actualizar el sistema."
 
-log "Instalando herramientas base..."
-ensure_pkg sudo git curl wget neovim unzip htop base-devel
+log "Instalando herramientas base y dependencias esenciales..."
+ensure_pkg sudo git curl wget neovim unzip htop base-devel cargo
 
 log "Instalando Helix y configurando como editor por defecto..."
 ensure_pkg helix
@@ -49,7 +54,7 @@ for var in "EDITOR=hx" "VISUAL=hx"; do
 done
 
 log "Agregando usuario '$USER_REAL' al grupo wheel..."
-usermod -aG wheel "$USER_REAL"
+usermod -aG wheel "$USER_REAL" || error_exit "No se pudo agregar al grupo wheel."
 
 log "Instalando Sway y componentes Wayland..."
 ensure_pkg sway wofi kitty xorg-xwayland xdg-utils xdg-desktop-portal-wlr
@@ -60,7 +65,7 @@ ensure_pkg pipewire wireplumber alsa-utils
 log "Instalando TBSM (session manager)..."
 ensure_pkg tbsm
 
-# Añadir autoinicio de tbsm en bash_profile y zshrc si no existe
+# Añadir autoinicio de tbsm en bash_profile y zshrc si no existe, siempre en el home del usuario real
 AUTOLOGIN_LINE="[[ -z \$DISPLAY && \$(tty) = /dev/tty1 ]] && exec tbsm"
 for shellrc in "$HOME_REAL/.bash_profile" "$HOME_REAL/.zshrc"; do
   if [[ -f "$shellrc" ]]; then
@@ -77,21 +82,21 @@ if ! command -v yay &>/dev/null; then
   sudo -u "$USER_REAL" bash -c "
     cd ~
     rm -rf yay
-    git clone https://aur.archlinux.org/yay.git
+    git clone https://aur.archlinux.org/yay.git || exit 1
     cd yay
-    makepkg -si --noconfirm
+    makepkg -si --noconfirm || exit 1
     cd ..
     rm -rf yay
-  "
+  " || error_exit "Falló la instalación de yay."
 fi
 
 # === INSTALAR BRAVE (desde AUR) ===
 log "Instalando Brave Browser (desde AUR)..."
-sudo -u "$USER_REAL" yay -S --noconfirm brave-bin
+sudo -u "$USER_REAL" yay -S --noconfirm brave-bin || error_exit "No se pudo instalar Brave."
 
 # === INSTALAR GVM (OpenVAS desde AUR) ===
 log "Instalando GVM (OpenVAS desde AUR)..."
-sudo -u "$USER_REAL" yay -S --noconfirm gvm
+sudo -u "$USER_REAL" yay -S --noconfirm gvm || error_exit "No se pudo instalar GVM."
 
 log "Inicializando base de datos de GVM... (puede tardar)"
 sudo -u "$USER_REAL" gvm-setup || error_exit "Falló la inicialización de GVM."
@@ -99,7 +104,7 @@ sudo -u "$USER_REAL" gvm-setup || error_exit "Falló la inicialización de GVM."
 log "Habilitando servicios de GVM..."
 for svc in gvmd ospd-openvas notus-scanner; do
   if systemctl list-unit-files | grep -q "^${svc}.service"; then
-    systemctl enable --now "$svc"
+    systemctl enable --now "$svc" || log "No se pudo habilitar el servicio $svc."
   else
     log "Servicio $svc no encontrado, omitiendo."
   fi
@@ -110,12 +115,12 @@ log "Instalando EWW desde código fuente..."
 sudo -u "$USER_REAL" bash -c "
   cd ~
   rm -rf eww
-  git clone https://github.com/elkowar/eww.git
+  git clone https://github.com/elkowar/eww.git || exit 1
   cd eww
-  cargo build --release
+  cargo build --release || exit 1
   mkdir -p ~/.local/bin
   cp target/release/eww ~/.local/bin/
-"
+" || error_exit "No se pudo compilar o instalar EWW."
 
 log "Instalación básica completada."
 echo -e "\nReinicia el sistema para iniciar sesión."
