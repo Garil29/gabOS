@@ -69,7 +69,8 @@ for shellrc in "$HOME_REAL/.bash_profile" "$HOME_REAL/.zshrc"; do
     echo "$AUTOLOGIN_LINE" > "$shellrc"
   fi
   chown "$USER_REAL":"$USER_REAL" "$shellrc"
-done
+
+
 
 # === INSTALAR YAY si no existe ===
 if ! command -v yay &>/dev/null; then
@@ -103,7 +104,20 @@ for svc in gvmd ospd-openvas notus-scanner; do
   else
     log "Servicio $svc no encontrado, omitiendo."
   fi
+
 done
+
+# === INSTALAR EWW (ElKowar's Wacky Widgets) ===
+log "Instalando EWW desde código fuente..."
+sudo -u "$USER_REAL" bash -c "
+  cd ~
+  rm -rf eww
+  git clone https://github.com/elkowar/eww.git
+  cd eww
+  cargo build --release
+  mkdir -p ~/.local/bin
+  cp target/release/eww ~/.local/bin/
+"
 
 log "Instalación básica completada."
 echo -e "\nReinicia el sistema para iniciar sesión."
