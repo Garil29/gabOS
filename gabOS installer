@@ -16,17 +16,9 @@ function error_exit() {
   exit 1
 }
 
-if [[ $EUID -ne 0 ]]; then
-  error_exit "Este script debe ejecutarse como root."
-fi
-
+# Asume ejecución como root, obtiene usuario real
 USER_REAL=${SUDO_USER:-$(logname 2>/dev/null || echo '')}
 HOME_REAL=$(eval echo ~$USER_REAL)
-
-# Si el usuario real es root, advertir y salir
-if [[ "$USER_REAL" == "root" || -z "$USER_REAL" || "$HOME_REAL" == "/root" ]]; then
-  error_exit "No debe ejecutar este instalador como root directamente. Use 'sudo' desde el usuario final."
-fi
 
 function ensure_pkg() {
   for pkg in "$@"; do
@@ -43,7 +35,7 @@ log "Actualizando sistema..."
 pacman -Syu --noconfirm || error_exit "Error al actualizar el sistema."
 
 log "Instalando herramientas base y dependencias esenciales..."
-ensure_pkg sudo git curl wget neovim unzip htop base-devel cargo
+ensure_pkg git curl wget neovim unzip htop base-devel cargo
 
 log "Instalando Helix y configurando como editor por defecto..."
 ensure_pkg helix
@@ -79,7 +71,7 @@ done
 # === INSTALAR YAY si no existe ===
 if ! command -v yay &>/dev/null; then
   log "Instalando yay (helper de AUR)..."
-  sudo -u "$USER_REAL" bash -c "
+  runuser -u "$USER_REAL" -- bash -c "
     cd ~
     rm -rf yay
     git clone https://aur.archlinux.org/yay.git || exit 1
@@ -92,14 +84,14 @@ fi
 
 # === INSTALAR BRAVE (desde AUR) ===
 log "Instalando Brave Browser (desde AUR)..."
-sudo -u "$USER_REAL" yay -S --noconfirm brave-bin || error_exit "No se pudo instalar Brave."
+runuser -u "$USER_REAL" -- yay -S --noconfirm brave-bin || error_exit "No se pudo instalar Brave."
 
 # === INSTALAR GVM (OpenVAS desde AUR) ===
 log "Instalando GVM (OpenVAS desde AUR)..."
-sudo -u "$USER_REAL" yay -S --noconfirm gvm || error_exit "No se pudo instalar GVM."
+runuser -u "$USER_REAL" -- yay -S --noconfirm gvm || error_exit "No se pudo instalar GVM."
 
 log "Inicializando base de datos de GVM... (puede tardar)"
-sudo -u "$USER_REAL" gvm-setup || error_exit "Falló la inicialización de GVM."
+runuser -u "$USER_REAL" -- gvm-setup || error_exit "Falló la inicialización de GVM."
 
 log "Habilitando servicios de GVM..."
 for svc in gvmd ospd-openvas notus-scanner; do
@@ -112,7 +104,7 @@ done
 
 # === INSTALAR EWW (ElKowar's Wacky Widgets) ===
 log "Instalando EWW desde código fuente..."
-sudo -u "$USER_REAL" bash -c "
+runuser -u "$USER_REAL" -- bash -c "
   cd ~
   rm -rf eww
   git clone https://github.com/elkowar/eww.git || exit 1
