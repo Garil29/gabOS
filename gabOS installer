@@ -4,7 +4,7 @@ set -e
 
 # ===============================
 # Instalador desatendido para gabOS
-# Basado en Debian Testing & Sway
+# Basado en Debian Testing + Sway
 # ===============================
 
 function log() {
@@ -29,10 +29,12 @@ apt update && apt upgrade -y
 log "Instalando herramientas base..."
 apt install -y sudo git curl wget neovim unzip htop build-essential
 
-log "Instalando Helix y reemplazando nano..."
+log "Instalando Helix y configurando como editor por defecto..."
 apt install -y helix
-apt remove -y nano
-ln -sf /usr/bin/hx /usr/bin/nano
+which hx || ln -s $(which helix) /usr/bin/hx
+apt remove -y nano || true
+update-alternatives --install /usr/bin/editor editor /usr/bin/hx 100
+update-alternatives --set editor /usr/bin/hx
 
 log "Agregando usuario '$USER_REAL' al grupo sudo..."
 usermod -aG sudo "$USER_REAL"
@@ -51,6 +53,9 @@ log "Instalando Zig temporalmente..."
 mkdir -p /opt/zig && cd /opt/zig
 ZIG_VER="0.11.0"
 wget https://ziglang.org/download/${ZIG_VER}/zig-linux-x86_64-${ZIG_VER}.tar.xz
+if [[ ! -f zig-linux-x86_64-${ZIG_VER}.tar.xz ]]; then
+  error_exit "No se pudo descargar Zig."
+fi
 tar -xf zig-linux-x86_64-${ZIG_VER}.tar.xz --strip-components=1
 ln -sf /opt/zig/zig /usr/local/bin/zig
 
@@ -64,18 +69,41 @@ make install
 log "Habilitando ly como display manager..."
 systemctl enable ly.service
 
+log "Limpiando instalación de Zig..."
+rm -rf /opt/zig
+rm -f /usr/local/bin/zig
+
 # === INSTALAR BRAVE ===
 log "Instalando Brave Browser..."
 curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
   https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+
+if [[ ! -f /usr/share/keyrings/brave-browser-archive-keyring.gpg ]]; then
+  error_exit "No se pudo descargar la llave de Brave."
+fi
 
 echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] \
 https://brave-browser-apt-release.s3.brave.com/ stable main" | \
 tee /etc/apt/sources.list.d/brave-browser-release.list
 
 apt update
-apt install -y brave-browser
+apt install -y brave-browser gnome-keyring libasound2
+
+# === INSTALACIÓN DE HERRAMIENTAS DE PENTESTING ===
+
+log "Instalando dependencias adicionales para GVM..."
+apt install -y rsync gnupg python3-setuptools python3-packaging \
+  python3-paramiko python3-defusedxml python3-psutil python3-lxml
+
+log "Instalando GVM (OpenVAS)..."
+apt install -y gvm
+log "Inicializando base de datos de vulnerabilidades... (puede tardar unos minutos)"
+sudo -u "$USER_REAL" gvm-setup
+log "Habilitando servicios de GVM..."
+systemctl enable --now gvmd ospd-openvas notus-scanner
 
 log "Instalación básica completada."
-echo "⚠Reinicia el sistema para iniciar sesión."
-echo "Sistema base instalado correctamente."
+echo -e "\n  Reinicia el sistema para iniciar sesión."
+echo " Sistema base instalado correctamente."
+echo -e "\n gabOS listo. Puedes reiniciar."
+read -p "Presiona Enter para salir..."
