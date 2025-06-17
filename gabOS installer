@@ -35,7 +35,7 @@ log "Actualizando sistema..."
 pacman -Syu --noconfirm || error_exit "Error al actualizar el sistema."
 
 log "Instalando herramientas base y dependencias esenciales..."
-ensure_pkg curl unzip htop base-devel cargo
+ensure_pkg curl unzip htop base-devel cargo git
 
 log "Instalando Helix y configurando como editor por defecto..."
 ensure_pkg helix
