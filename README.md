@@ -1,3 +1,3 @@
 # gabOS
-an arch based OS and my personal set of tools
+an arch based OS
 work in progress
