@@ -78,22 +78,6 @@ fi
 log "Instalando Brave Browser (desde AUR)..."
 runuser -u "$USER_REAL" -- yay -S --noconfirm brave-bin || error_exit "No se pudo instalar Brave."
 
-# === INSTALAR GVM (OpenVAS desde AUR) ===
-log "Instalando GVM (OpenVAS desde AUR)..."
-runuser -u "$USER_REAL" -- yay -S --noconfirm gvm-git || error_exit "No se pudo instalar GVM."
-
-log "Inicializando base de datos de GVM... (puede tardar)"
-runuser -u "$USER_REAL" -- gvm-setup || error_exit "Falló la inicialización de GVM."
-
-log "Habilitando servicios de GVM..."
-for svc in gvmd ospd-openvas notus-scanner; do
-  if systemctl list-unit-files | grep -q "^${svc}.service"; then
-    systemctl enable --now "$svc" || log "No se pudo habilitar el servicio $svc."
-  else
-    log "Servicio $svc no encontrado, omitiendo."
-  fi
-done
-
 # === INSTALAR EWW (ElKowar's Wacky Widgets) ===
 log "Instalando EWW desde código fuente..."
 runuser -u "$USER_REAL" -- bash -c "
