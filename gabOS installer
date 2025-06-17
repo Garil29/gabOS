@@ -80,7 +80,7 @@ runuser -u "$USER_REAL" -- yay -S --noconfirm brave-bin || error_exit "No se pud
 
 # === INSTALAR GVM (OpenVAS desde AUR) ===
 log "Instalando GVM (OpenVAS desde AUR)..."
-runuser -u "$USER_REAL" -- yay -S --noconfirm gvm || error_exit "No se pudo instalar GVM."
+runuser -u "$USER_REAL" -- yay -S --noconfirm gvm-git || error_exit "No se pudo instalar GVM."
 
 log "Inicializando base de datos de GVM... (puede tardar)"
 runuser -u "$USER_REAL" -- gvm-setup || error_exit "Falló la inicialización de GVM."
