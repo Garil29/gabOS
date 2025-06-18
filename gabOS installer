@@ -112,6 +112,25 @@ fi
 log "Instalando Brave Browser (desde AUR)..."
 runuser -u "$USER_REAL" -- yay -S --noconfirm brave-bin || error_exit "No se pudo instalar Brave."
 
+# === LIMPIEZA DE RESIDUOS DE INSTALACIÓN ===
+log "Limpiando residuos de instalación..."
+
+# Limpiar caché de paquetes descargados
+pacman -Scc --noconfirm
+
+# Eliminar dependencias huérfanas (si las hay)
+if pacman -Qtdq &>/dev/null; then
+  pacman -Rns --noconfirm $(pacman -Qtdq)
+fi
+
+# Limpiar caché de yay (AUR helper), si existe
+if command -v yay &>/dev/null; then
+  yay -Sc --noconfirm
+fi
+
+# Limpiar archivos temporales
+rm -rf /tmp/*
+
 log "Instalación básica completada."
 echo -e "\nReinicia el sistema para iniciar sesión."
 echo -e "\n gabOS está listo. ¡Buen hacking, $USER_REAL!"
