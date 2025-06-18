@@ -51,6 +51,39 @@ usermod -aG wheel "$USER_REAL" || error_exit "No se pudo agregar al grupo wheel.
 log "Instalando Sway y componentes Wayland..."
 ensure_pkg sway wofi kitty xorg-xwayland xdg-utils xdg-desktop-portal-wlr
 
+log "Creando configuración básica de Sway para $USER_REAL..."
+SWAY_CONFIG_DIR="$HOME_REAL/.config/sway"
+SWAY_CONFIG_FILE="$SWAY_CONFIG_DIR/config"
+
+runuser -u "$USER_REAL" -- bash -c "
+mkdir -p '$SWAY_CONFIG_DIR'
+cat > '$SWAY_CONFIG_FILE' << 'EOF'
+# Tecla principal (Super/Windows)
+set \$mod Mod4
+
+# Lanzar terminal
+bindsym \$mod+Return exec kitty
+
+# Cerrar ventana
+bindsym \$mod+Shift+q kill
+
+# Reiniciar Sway
+bindsym \$mod+Shift+c reload
+bindsym \$mod+Shift+r restart
+
+# Salir de sway
+bindsym \$mod+Shift+e exit
+
+# Fondo de pantalla (requiere swaybg)
+exec_always swaybg -c '#222222'
+
+# Barra de estado simple
+bar {
+  status_command while :; do date '+%a %d %b %Y %H:%M:%S'; sleep 1; done
+}
+EOF
+"
+
 log "Instalando sonido (Pipewire)..."
 ensure_pkg pipewire wireplumber alsa-utils
 
