@@ -49,8 +49,9 @@ log "Agregando usuario '$USER_REAL' al grupo wheel..."
 usermod -aG wheel "$USER_REAL" || error_exit "No se pudo agregar al grupo wheel."
 
 log "Instalando Sway y componentes Wayland..."
-ensure_pkg sway wofi kitty
+ensure_pkg sway wofi kitty xorg-xwayland xdg-utils xdg-desktop-portal-wlr
 
+# ======= NUEVA SECCIÓN: Configuración básica sway =======
 log "Creando configuración básica de Sway para $USER_REAL..."
 SWAY_CONFIG_DIR="$HOME_REAL/.config/sway"
 SWAY_CONFIG_FILE="$SWAY_CONFIG_DIR/config"
@@ -83,8 +84,7 @@ bar {
 }
 EOF
 "
-xorg-xwayland xdg-utils xdg-desktop-portal-wlr
-
+# ======= FIN NUEVA SECCIÓN =======
 
 log "Instalando sonido (Pipewire)..."
 ensure_pkg pipewire wireplumber alsa-utils
