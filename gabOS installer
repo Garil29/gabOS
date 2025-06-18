@@ -78,18 +78,6 @@ fi
 log "Instalando Brave Browser (desde AUR)..."
 runuser -u "$USER_REAL" -- yay -S --noconfirm brave-bin || error_exit "No se pudo instalar Brave."
 
-# === INSTALAR EWW (ElKowar's Wacky Widgets) ===
-log "Instalando EWW desde código fuente..."
-runuser -u "$USER_REAL" -- bash -c "
-  cd ~
-  rm -rf eww
-  git clone https://github.com/elkowar/eww.git || exit 1
-  cd eww
-  cargo build --release || exit 1
-  mkdir -p ~/.local/bin
-  cp target/release/eww ~/.local/bin/
-" || error_exit "No se pudo compilar o instalar EWW."
-
 log "Instalación básica completada."
 echo -e "\nReinicia el sistema para iniciar sesión."
 echo -e "\n gabOS está listo. ¡Buen hacking, $USER_REAL!"
