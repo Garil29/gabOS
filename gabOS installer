@@ -63,20 +63,16 @@ cat > '$SWAY_CONFIG_FILE' << 'EOF'
 set \$mod Mod4
 
 # Lanzar terminal
-bindsym \$mod+Return exec kitty
+bindsym \$mod+Space exec kitty
 
 # Cerrar ventana
-bindsym \$mod+Shift+q kill
+bindsym \$mod+q kill
 
 # Reiniciar Sway
 bindsym \$mod+Shift+c reload
-bindsym \$mod+Shift+r restart
 
 # Salir de sway
 bindsym \$mod+Shift+e exit
-
-# Fondo de pantalla (requiere swaybg)
-exec_always swaybg -c '#222222'
 
 # Barra de estado simple
 bar {
