@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Verifica si el script se está ejecutando como root
+if [ "$EUID" -ne 0 ]; then
+  echo -e "\033[1;31m[ERROR]\033[0m Por favor ejecuta este script como root (usa sudo ./gabOS\\ installer)"
+  exit 1
+fi
+
 set -e
 
 # ===============================
