@@ -37,6 +37,37 @@ pacman -Syu --noconfirm || error_exit "Error al actualizar el sistema."
 log "Instalando herramientas base y dependencias esenciales..."
 ensure_pkg curl unzip htop base-devel cargo git
 
+# ======= DETECCIÓN Y CONFIGURACIÓN AUTOMÁTICA DEL TECLADO =======
+log "Detectando layout de teclado..."
+
+LAYOUT=""
+if command -v localectl &>/dev/null; then
+    LAYOUT=$(localectl status | grep "VC Keymap" | awk '{print $3}')
+elif [ -f /etc/default/keyboard ]; then
+    LAYOUT=$(grep XKBLAYOUT /etc/default/keyboard | cut -d'=' -f2 | tr -d '"')
+fi
+
+# Si no se detectó, usa 'us' como predeterminado
+if [ -z "$LAYOUT" ]; then
+    LAYOUT="us"
+fi
+
+log "Layout detectado: $LAYOUT"
+
+# Aplicar layout en consola (TTY)
+loadkeys "$LAYOUT"
+
+# Aplicar layout en entorno gráfico si existe setxkbmap
+if command -v setxkbmap &>/dev/null; then
+    setxkbmap "$LAYOUT"
+fi
+
+# Persistencia: guardar en /etc/default/keyboard si es posible
+if [ -f /etc/default/keyboard ]; then
+    sed -i "s/XKBLAYOUT=.*/XKBLAYOUT=\"$LAYOUT\"/" /etc/default/keyboard
+fi
+# ======= FIN DETECCIÓN Y CONFIGURACIÓN DE TECLADO =======
+
 log "Instalando Helix y configurando como editor por defecto..."
 ensure_pkg helix
 
