@@ -35,7 +35,7 @@ log "Actualizando sistema..."
 pacman -Syu --noconfirm || error_exit "Error al actualizar el sistema."
 
 log "Instalando herramientas base y dependencias esenciales..."
-ensure_pkg curl unzip htop base-devel cargo git spotify-launcher
+ensure_pkg curl unzip htop base-devel cargo git spotify-launcher waybar
 
 # ======= DETECCIÓN Y CONFIGURACIÓN AUTOMÁTICA DEL TECLADO =======
 log "Detectando layout de teclado..."
@@ -113,7 +113,109 @@ bindsym \$mod+Shift+e exit
 # Usar wofi
 bindsym \$mod+x exec wofi --show drun
 "
-# ======= PASOS FINALES =======
+# ======= FIN SECCIÓN SWAY =======
+
+# ======= CONFIGURACIÓN BASE DE WAYBAR =======
+log "Creando configuración base de Waybar para $USER_REAL..."
+WAYBAR_CONFIG_DIR="$HOME_REAL/.config/waybar"
+WAYBAR_CONFIG_FILE="$WAYBAR_CONFIG_DIR/config"
+WAYBAR_STYLE_FILE="$WAYBAR_CONFIG_DIR/style.css"
+
+runuser -u "$USER_REAL" -- bash -c "
+mkdir -p '$WAYBAR_CONFIG_DIR'
+cat > '$WAYBAR_CONFIG_FILE' << 'EOF'
+{
+    \"layer\": \"top\",
+    \"position\": \"top\",
+    \"modules-left\": [\"sway/workspaces\", \"sway/mode\", \"custom/music\"],
+    \"modules-center\": [],
+    \"modules-right\": [
+        \"custom/mail\",
+        \"network\",
+        \"pulseaudio\",
+        \"battery\",
+        \"clock\"
+    ],
+    \"sway/workspaces\": {
+        \"format\": \"{name}\"
+    },
+    \"custom/music\": {
+        \"format\": \"🎵 {output}\",
+        \"exec\": \"playerctl metadata --format '{{artist}} - {{title}}' || echo 'Sin música'\",
+        \"interval\": 5
+    },
+    \"custom/mail\": {
+        \"format\": \"✉️ {output}\",
+        \"exec\": \"echo '5'\",
+        \"interval\": 60
+    },
+    \"network\": {
+        \"format-wifi\": \"  {essid} ({signalStrength}%)\",
+        \"format-ethernet\": \"  {ifname}\",
+        \"format-disconnected\": \"⛔ Sin red\"
+    },
+    \"pulseaudio\": {
+        \"format\": \"🔊 {volume}%\"
+    },
+    \"battery\": {
+        \"format\": \"{capacity}% {icon}\",
+        \"format-icons\": [\"\", \"\", \"\", \"\", \"\"]
+    },
+    \"clock\": {
+        \"format\": \" {:%H:%M}\",
+        \"tooltip-format\": \"{:%A, %d %B %Y}\"
+    }
+}
+EOF
+
+cat > '$WAYBAR_STYLE_FILE' << 'EOF'
+* {
+    font-family: \"Fira Sans\", \"JetBrainsMono\", sans-serif;
+    font-size: 14px;
+}
+
+window#waybar {
+    background: rgba(35, 39, 42, 0.95);
+    border-radius: 15px;
+    margin: 12px 12px 0 12px;
+    padding: 2px 10px;
+    color: #cdd6f4;
+}
+
+#workspaces button {
+    background: transparent;
+    border-radius: 10px;
+    padding: 0 8px;
+    color: #a6adc8;
+}
+
+#workspaces button.active {
+    background: #89b4fa;
+    color: #1e1e2e;
+}
+
+#clock, #battery, #network, #pulseaudio, #custom-music, #custom-mail {
+    margin: 0 8px;
+    padding: 0 10px;
+    border-radius: 10px;
+    background: rgba(49, 54, 63, 0.6);
+}
+
+#battery.charging {
+    color: #a6e3a1;
+}
+
+#battery.critical {
+    color: #f38ba8;
+    animation: blink 1s infinite alternate;
+}
+
+@keyframes blink {
+    to { opacity: 0.6; }
+}
+EOF
+"
+# ======= FIN WAYBAR =======
 
 log "Instalando sonido (Pipewire)..."
 ensure_pkg pipewire wireplumber alsa-utils
