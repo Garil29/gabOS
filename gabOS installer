@@ -62,6 +62,12 @@ cat > '$SWAY_CONFIG_FILE' << 'EOF'
 # Tecla principal (Super/Windows)
 set \$mod Mod4
 
+# Configurar layout por defecto a la-latin1
+input * {
+    xkb_layout la
+    xkb_variant latin1
+}
+
 # Lanzar terminal
 bindsym \$mod+Space exec kitty
 
