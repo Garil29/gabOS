@@ -112,6 +112,9 @@ bindsym \$mod+Shift+e exit
 
 # Usar wofi
 bindsym \$mod+x exec wofi --show drun
+
+# Ejecutar en inicio
+exec_always waybar
 "
 # ======= FIN SECCIÓN SWAY =======
 
