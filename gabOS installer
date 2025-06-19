@@ -35,7 +35,7 @@ log "Actualizando sistema..."
 pacman -Syu --noconfirm || error_exit "Error al actualizar el sistema."
 
 log "Instalando herramientas base y dependencias esenciales..."
-ensure_pkg curl unzip htop base-devel cargo git spotify-launcher waybar
+ensure_pkg curl unzip htop base-devel cargo git spotify-launcher waybar ttf-fira-code-nerd
 
 # ======= DETECCIÓN Y CONFIGURACIÓN AUTOMÁTICA DEL TECLADO =======
 log "Detectando layout de teclado..."
@@ -199,7 +199,7 @@ EOF
 
 cat > '$WAYBAR_STYLE_FILE' << 'EOF'
 * {
-    font-family: \"Fira Sans\", \"JetBrainsMono\", sans-serif;
+    font-family: \"FiraCode Nerd Font\", \"JetBrainsMono Nerd Font\", \"Fira Sans\", sans-serif;
     font-size: 14px;
 }
 
