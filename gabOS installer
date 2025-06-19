@@ -41,7 +41,9 @@ log "Actualizando sistema..."
 pacman -Syu --noconfirm || error_exit "Error al actualizar el sistema."
 
 log "Instalando herramientas base y dependencias esenciales..."
-ensure_pkg curl unzip htop base-devel cargo git spotify-launcher waybar ttf-nerd-fonts-symbols
+ensure_pkg curl unzip htop base-devel cargo git spotify-launcher waybar ttf-nerd-fonts-symbols macchina
+
+
 
 # ======= DETECCIÓN Y CONFIGURACIÓN AUTOMÁTICA DEL TECLADO =======
 log "Detectando layout de teclado..."
@@ -318,6 +320,15 @@ fi
 
 # Limpiar archivos temporales
 rm -rf /tmp/*
+
+log "Estableciendo 'gabOS' como nombre de la distribución en /etc/os-release..."
+if [ -f /etc/os-release ]; then
+  sed -i 's/^NAME=.*/NAME="gabOS"/' /etc/os-release
+  sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="gabOS"/' /etc/os-release
+else
+  echo 'NAME="gabOS"' > /etc/os-release
+  echo 'PRETTY_NAME="gabOS"' >> /etc/os-release
+fi
 
 log "Instalación básica completada."
 echo -e "\nReinicia el sistema para iniciar sesión."
