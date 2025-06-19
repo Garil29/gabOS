@@ -273,6 +273,27 @@ fi
 log "Instalando Brave Browser (desde AUR)..."
 runuser -u "$USER_REAL" -- yay -S --noconfirm brave-bin || error_exit "No se pudo instalar Brave."
 
+# Configurando brave a modo oscuro
+log "Preconfigurando Brave para usar tema oscuro..."
+BRAVE_PREFS_DIR="$HOME_REAL/.config/BraveSoftware/Brave-Browser/Default"
+runuser -u "$USER_REAL" -- bash -c "
+mkdir -p '$BRAVE_PREFS_DIR'
+cat > '$BRAVE_PREFS_DIR/Preferences' <<'EOF'
+{
+  \"profile\": {
+    \"theme\": {
+      \"use_system\": false
+    }
+  },
+  \"browser\": {
+    \"dark_mode\": true
+  },
+  \"extensions\": {
+    \"theme\": \"chrome://theme/id/9baf8bca-2d9a-4a8e-9c9e-7e0eecaa1e19\"
+  }
+}
+EOF
+"
 # === LIMPIEZA DE RESIDUOS DE INSTALACIÓN ===
 log "Limpiando residuos de instalación..."
 
