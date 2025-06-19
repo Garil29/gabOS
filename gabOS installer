@@ -93,7 +93,7 @@ cat > '$SWAY_CONFIG_FILE' << 'EOF'
 # Tecla principal (Super/Windows)
 set \$mod Mod4
 
-# Configurar layout por defecto a la-latin1
+# Configurar layout por defecto a latam
 input * {
     xkb_layout latam
 }
@@ -112,12 +112,6 @@ bindsym \$mod+Shift+e exit
 
 # Usar wofi
 bindsym \$mod+x exec wofi --show drun
-
-# Barra de estado simple
-bar {
-  status_command while :; do date '+%a %d %b %Y %H:%M:%S'; sleep 1; done
-}
-EOF
 "
 # ======= PASOS FINALES =======
 
