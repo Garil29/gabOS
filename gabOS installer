@@ -35,7 +35,7 @@ log "Actualizando sistema..."
 pacman -Syu --noconfirm || error_exit "Error al actualizar el sistema."
 
 log "Instalando herramientas base y dependencias esenciales..."
-ensure_pkg curl unzip htop base-devel cargo git spotify-launcher discord
+ensure_pkg curl unzip htop base-devel cargo git spotify-launcher
 
 # ======= DETECCIÓN Y CONFIGURACIÓN AUTOMÁTICA DEL TECLADO =======
 log "Detectando layout de teclado..."
@@ -95,7 +95,7 @@ set \$mod Mod4
 
 # Configurar layout por defecto a la-latin1
 input * {
-    xkb_layout la-latin1
+    xkb_layout latam
 }
 
 # Lanzar terminal
@@ -172,5 +172,5 @@ echo -e "\nReinicia el sistema para iniciar sesión."
 echo -e "\n gabOS está listo. ¡Buen hacking, $USER_REAL!"
 read -p "Presiona Enter para reiniciar..."
 
-sleep 2
+sleep 1
 reboot
