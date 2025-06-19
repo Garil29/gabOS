@@ -118,6 +118,32 @@ exec_always waybar
 "
 # ======= FIN SECCIÓN SWAY =======
 
+# ======= NUEVA SECCIÓN: Tema personalizado para Wofi =======
+log "Creando tema personalizado para Wofi en $USER_REAL..."
+WOFI_CONFIG_DIR="$HOME_REAL/.config/wofi"
+WOFI_STYLE_FILE="$WOFI_CONFIG_DIR/style.css"
+
+runuser -u "$USER_REAL" -- bash -c "
+mkdir -p '$WOFI_CONFIG_DIR'
+cat > '$WOFI_STYLE_FILE' << 'EOF'
+window {
+    background-color: rgba(0, 0, 0, 0.2); /* fondo transparente */
+    color: #ff2222; /* rojo brillante para el texto */
+}
+
+#entry, #input {
+    background: transparent;
+    color: #ff2222; /* rojo brillante */
+}
+
+#entry:selected {
+    background: rgba(0, 139, 0, 0.7); /* verde oscuro y un poco transparente */
+    color: #ff2222; /* rojo brillante para el texto seleccionado */
+}
+EOF
+"
+# ======= FIN TEMA WOFI =======
+
 # ======= CONFIGURACIÓN BASE DE WAYBAR =======
 log "Creando configuración base de Waybar para $USER_REAL..."
 WAYBAR_CONFIG_DIR="$HOME_REAL/.config/waybar"
