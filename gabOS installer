@@ -120,7 +120,7 @@ bar {
 }
 EOF
 "
-# ======= FIN NUEVA SECCIÓN =======
+# ======= PASOS FINALES =======
 
 log "Instalando sonido (Pipewire)..."
 ensure_pkg pipewire wireplumber alsa-utils
