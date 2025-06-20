@@ -331,6 +331,20 @@ else
 fi
 
 log "Instalación básica completada."
+cat <<'EOF'
+
+ ▄████  ▄▄▄       ▄▄▄▄    ▒█████    ██████ 
+ ██▒ ▀█▒▒████▄    ▓█████▄ ▒██▒  ██▒▒██    ▒ 
+▒██░▄▄▄░▒██  ▀█▄  ▒██▒ ▄██▒██░  ██▒░ ▓██▄   
+░▓█  ██▓░██▄▄▄▄██ ▒██░█▀  ▒██   ██░  ▒   ██▒
+░▒▓███▀▒ ▓█   ▓██▒░▓█  ▀█▓░ ████▓▒░▒██████▒▒
+ ░▒   ▒  ▒▒   ▓▒█░░▒▓███▀▒░ ▒░▒░▒░ ▒ ▒▓▒ ▒ ░
+  ░   ░   ▒   ▒▒ ░▒░▒   ░   ░ ▒ ▒░ ░ ░▒  ░ ░
+░ ░   ░   ░   ▒    ░    ░ ░ ░ ░ ▒  ░  ░  ░  
+      ░       ░  ░ ░          ░ ░        ░  
+                        ░
+
+EOF
 echo -e "\nReinicia el sistema para iniciar sesión."
 echo -e "\n gabOS está listo. ¡Buen hacking, $USER_REAL!"
 read -p "Presiona Enter para reiniciar..."
